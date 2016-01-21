@@ -1,5 +1,7 @@
-GitHubApi = require 'github'
 childProcess = require 'child-process-promise'
+GitHubApi = require 'github'
+uuid = require 'node-uuid'
+fs = require 'fs-promise'
 
 exec = childProcess.exec
 
@@ -23,27 +25,33 @@ github.search.repos {
   tops = res.items #.map(function(item) {return item.git_url;})
   console.log 'Got ' + tops.length + ' repositories'
 
-  # test
+  # testing
   repo = tops[0]
-  exec("git clone #{repo.git_url} tmp/#{repo.id}")
+  repoDir = "tmp/#{repo.name}_#{repo.id}"
+  exec("mkdir -p #{repoDir}/github")
+  .then (res) -> exec("git clone --bare #{repo.git_url} #{repoDir}/bare_repo")
+  .then (res) -> exec("git clone #{repo.git_url} #{repoDir}/latest")
   .then (res) ->
-    console.log repo.full_name
-    console.log res
-    exec("cd tmp/ #{repo.id}; npm i")
-    .then (res) ->
-      console.log res
-      return
-    .fail (err) ->
-      console.error 'ERROR: ', err
-     .progress (childProcess) ->
-      console.log 'childProcess.pid: ', childProcess.pid
-    console.log '------------'
-  .fail (err) ->
-    console.error 'ERROR: ', err
-  .progress (childProcess) ->
-    console.log 'childProcess.pid: ', childProcess.pid
+    # format index.json
+    indexJson = {
+      corpus_release: "1.0", # TODO: db
+      code: "./latest",
+      site_specific_id: repo.name,
+      git_bare_repo: "./bare_repo",
+      name: repo.name,
+      site: "github",
+      repo: "github",
+      on_disk_ver: "1.2",
+      crawled_date: new Date().toISOString(),
+      uuid: uuid.v4()
+    }
+    fs.writeFile("#{repoDir}/index.json", JSON.stringify(indexJson, null, 4))
+  .then ->
+    # info.json
+    fs.writeFile("#{repoDir}/github/info.json", JSON.stringify(repo, null, 4))
+  .fail (err) -> console.error 'ERROR:', err
 
-  # all
+  # real
   #tops.forEach (repo) ->
   #  exec("git clone #{repo.git_url} tmp/ #{repo.id}")
   #  .then (res) ->
