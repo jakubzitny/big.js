@@ -19,7 +19,7 @@ handleRepo = (repo) ->
     exec("git clone --bare #{repo.git_url} #{repoDir}/bare_repo")
 
   cloneLatestRepo = (res) ->
-    exec("git clone #{repo.git_url} #{repoDir}/latest")
+    exec("git clone --depth 1 #{repo.git_url} #{repoDir}/latest")
 
   # format index.json
   writeIndex = (res) ->
