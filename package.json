@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "rm -rf tmp/; coffee index.coffee",
+    "start": "coffee index.coffee",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",

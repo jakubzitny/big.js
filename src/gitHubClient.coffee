@@ -9,10 +9,12 @@ class GitHubClient
   API_KEY: '2d504099f323ab60a4ad'
   API_SECRET: 'bfc397e7bc66808b7b82bc825695cd6741d8c896'
 
-  jsConfig: ->
+  jsConfig: (page = 1) ->
     sort: 'stars'
     q: 'language:JavaScript'
     language: 'javascript'
+    per_page: 100
+    page: page
 
   constructor: ->
     @gitHubApi = new GitHubApi
@@ -31,16 +33,37 @@ class GitHubClient
       secret: @API_SECRET
 
   search: (onSearch, searchConfig) ->
-    if not searchConfig
-      searchConfig = @jsConfig()
+    promisePool = []
 
-    callback = (err, res) =>
-      # TODO: handle error
-      tops = res.items
-      console.log "Got #{tops.length} repositories"
-      onSearch(tops)
+    [1..10].forEach (i) =>
+      p = new Promise (resolve, reject) =>
+        callback = (err, res) => # TODO: handle error
+          if err
+            console.log(err)
+            reject(err)
+          else if res?.items
+            tops = res.items
+            console.log "Got #{tops.length} repositories"
+            onSearch(tops)
+            console.log(i, " hundred")
+            resolve()
+          else
+            console.log("wtf")
+            reject("wtf")
 
-    @gitHubApi.search.repos(searchConfig, callback)
+        searchConfig = @jsConfig(i)
+
+        @gitHubApi.search.repos(searchConfig, callback)
+
+      promisePool.push(p)
+
+    Promise.all(promisePool)
+    .then (x) ->
+      console.log("done...")
+      console.log(x)
+    .catch (e) ->
+      console.log("error...")
+      console.log(e)
 
   isNodeRepo: (repo, cb) ->
     # console.log(@gitHubApi.authorization.getAll())
@@ -60,7 +83,7 @@ class GitHubClient
   generalCall: (section, callName, repo, cb) ->
     sectionCall = @gitHubApi[section]
     apiCall = sectionCall[callName]
-    console.log(callName)
+    #console.log(callName)
 
     callback = (err, res) ->
       if err

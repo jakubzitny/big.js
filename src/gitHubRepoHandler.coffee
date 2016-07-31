@@ -9,7 +9,8 @@ gitHubClient = require './gitHubClient'
 
 handleRepo = (repo) ->
 
-  repoDir = "tmp/#{repo.name}_#{repo.id}"
+  console.log(repo.full_name)
+  repoDir = "/mnt/data2/#{repo.full_name}_#{repo.id}"
 
   writeFile = (fileName, data) ->
     fs.writeFile "#{repoDir}/github/#{fileName}.json",
@@ -106,7 +107,7 @@ handleRepo = (repo) ->
   # TODO: if package.json
 
   exec("mkdir -p #{repoDir}/github")
-  .then(cloneBareRepo)
+  #.then(cloneBareRepo)
   .then(cloneLatestRepo)
   .then(writeIndex)
   .then(writeInfo)
